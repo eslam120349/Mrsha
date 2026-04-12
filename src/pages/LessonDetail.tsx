@@ -6,17 +6,9 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Plus, Users, CalendarDays, Trash2, Eye, X, Calendar, BookOpen } from 'lucide-react';
 
 const inputStyle: React.CSSProperties = {
-  width: '100%',
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,255,255,0.09)',
-  borderRadius: 10,
-  padding: '10px 14px',
-  fontSize: 13,
-  color: '#e2e8f0',
-  outline: 'none',
-  fontFamily: 'inherit',
-  transition: 'border-color 0.15s',
-  boxSizing: 'border-box' as const,
+  width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)',
+  borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#e2e8f0',
+  outline: 'none', fontFamily: 'inherit', transition: 'border-color 0.15s', boxSizing: 'border-box' as const,
 };
 
 const LessonDetail = () => {
@@ -71,52 +63,30 @@ const LessonDetail = () => {
   const addStudent = async () => {
     if (!selectedStudentId) return;
     const { error } = await supabase.from('lesson_students').insert({ lesson_id: id!, student_id: selectedStudentId });
-    if (error) {
-      toast({ title: 'خطأ', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'تم إضافة الطالب' });
-      setAddStudentOpen(false);
-      setSelectedStudentId('');
-      fetchAll();
-    }
+    if (error) { toast({ title: 'خطأ', description: error.message, variant: 'destructive' }); }
+    else { toast({ title: 'تم إضافة الطالب' }); setAddStudentOpen(false); setSelectedStudentId(''); fetchAll(); }
   };
 
   const removeStudent = async (lsId: string) => {
     const { error } = await supabase.from('lesson_students').delete().eq('id', lsId);
-    if (error) {
-      toast({ title: 'خطأ', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'تم إزالة الطالب' });
-      setRemoveConfirmId(null);
-      fetchAll();
-    }
+    if (error) { toast({ title: 'خطأ', description: error.message, variant: 'destructive' }); }
+    else { toast({ title: 'تم إزالة الطالب' }); setRemoveConfirmId(null); fetchAll(); }
   };
 
   const createSession = async () => {
     if (!newSessionDate) return;
-    const { error } = await supabase.from('sessions').insert({
-      lesson_id: id!, user_id: user!.id, date: newSessionDate,
-    });
-    if (error) {
-      toast({ title: 'خطأ', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'تم إنشاء الحصة' });
-      setNewSessionOpen(false);
-      setNewSessionDate('');
-      fetchAll();
-    }
+    const { error } = await supabase.from('sessions').insert({ lesson_id: id!, user_id: user!.id, date: newSessionDate });
+    if (error) { toast({ title: 'خطأ', description: error.message, variant: 'destructive' }); }
+    else { toast({ title: 'تم إنشاء الحصة' }); setNewSessionOpen(false); setNewSessionDate(''); fetchAll(); }
   };
 
   const enrolledIds = enrolledStudents.map(e => e.student_id);
   const availableStudents = allStudents.filter(s => !enrolledIds.includes(s.id));
 
   const avatarColors = [
-    { bg: '#1e3a5f', text: '#60a5fa' },
-    { bg: '#1a3d2b', text: '#4ade80' },
-    { bg: '#2d1f4e', text: '#a78bfa' },
-    { bg: '#3d2a0a', text: '#fbbf24' },
-    { bg: '#3d1a2e', text: '#f472b6' },
-    { bg: '#1a2d3d', text: '#38bdf8' },
+    { bg: '#1e3a5f', text: '#60a5fa' }, { bg: '#1a3d2b', text: '#4ade80' },
+    { bg: '#2d1f4e', text: '#a78bfa' }, { bg: '#3d2a0a', text: '#fbbf24' },
+    { bg: '#3d1a2e', text: '#f472b6' }, { bg: '#1a2d3d', text: '#38bdf8' },
   ];
 
   if (!lesson) return (
@@ -127,33 +97,43 @@ const LessonDetail = () => {
 
   return (
     <div style={{ direction: 'rtl', fontFamily: "'Cairo','Noto Sans Arabic',sans-serif" }}>
+      <style>{`
+        .ld-scroll-wrap {
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+        .ld-scroll-wrap::-webkit-scrollbar { height: 4px; }
+        .ld-scroll-wrap::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+        .ld-scroll-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        .ld-sessions-table { min-width: 460px; width: 100%; }
+        .ld-session-row {
+          display: grid;
+          grid-template-columns: 1fr 160px 50px;
+          padding: 12px 20px;
+          align-items: center;
+        }
+        .ld-session-header {
+          display: grid;
+          grid-template-columns: 1fr 160px 50px;
+          padding: 9px 20px;
+          border-bottom: 1px solid rgba(255,255,255,0.04);
+          background: rgba(255,255,255,0.01);
+        }
+      `}</style>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 28 }}>
-        <Link to="/lessons" style={{
-          width: 36, height: 36, borderRadius: 10,
-          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#64748b', textDecoration: 'none', flexShrink: 0,
-        }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
+        <Link to="/lessons" style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', textDecoration: 'none', flexShrink: 0 }}>
           <ArrowLeft size={17} />
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
-          <div style={{
-            width: 42, height: 42, borderRadius: 11, flexShrink: 0,
-            background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
+          <div style={{ width: 42, height: 42, borderRadius: 11, flexShrink: 0, background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <BookOpen size={18} color="#818cf8" />
           </div>
           <div>
             <h1 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', margin: 0 }}>{lesson.title}</h1>
             {lesson.day_of_week && (
-              <span style={{
-                fontSize: 11, color: '#818cf8',
-                background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)',
-                borderRadius: 20, padding: '2px 10px', marginTop: 3, display: 'inline-flex', alignItems: 'center', gap: 4,
-              }}>
+              <span style={{ fontSize: 11, color: '#818cf8', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 20, padding: '2px 10px', marginTop: 3, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <Calendar size={10} /> {lesson.day_of_week}
               </span>
             )}
@@ -162,47 +142,23 @@ const LessonDetail = () => {
       </div>
 
       {lesson.description && (
-        <div style={{
-          background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.12)',
-          borderRadius: 12, padding: '12px 16px', marginBottom: 20,
-          fontSize: 13, color: '#64748b', lineHeight: 1.6,
-        }}>
+        <div style={{ background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.12)', borderRadius: 12, padding: '12px 16px', marginBottom: 20, fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>
           {lesson.description}
         </div>
       )}
 
       {/* Enrolled Students */}
-      <div style={{
-        background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
-        borderRadius: 16, overflow: 'hidden', marginBottom: 16,
-      }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)',
-          background: 'rgba(255,255,255,0.01)',
-        }}>
+      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)', flexWrap: 'wrap', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Users size={16} color="#38bdf8" />
             <span style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>الطلاب المسجلين</span>
-            <span style={{
-              fontSize: 11, color: '#475569', background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: '2px 10px',
-            }}>{enrolledStudents.length}</span>
+            <span style={{ fontSize: 11, color: '#475569', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: '2px 10px' }}>{enrolledStudents.length}</span>
           </div>
-          <button
-            onClick={() => setAddStudentOpen(true)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.25)',
-              borderRadius: 8, padding: '6px 14px',
-              fontSize: 12, fontWeight: 600, color: '#38bdf8',
-              cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
+          <button onClick={() => setAddStudentOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.25)', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 600, color: '#38bdf8', cursor: 'pointer', fontFamily: 'inherit' }}>
             <Plus size={13} /> إضافة طالب
           </button>
         </div>
-
         <div style={{ padding: '16px 20px' }}>
           {enrolledStudents.length === 0 ? (
             <p style={{ fontSize: 13, color: '#334155', textAlign: 'center', padding: '16px 0' }}>لا يوجد طلاب مسجلين</p>
@@ -211,30 +167,14 @@ const LessonDetail = () => {
               {enrolledStudents.map((e: any, i: number) => {
                 const col = avatarColors[i % avatarColors.length];
                 return (
-                  <div key={e.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 7,
-                    background: col.bg, border: `1px solid ${col.text}22`,
-                    borderRadius: 20, padding: '5px 10px 5px 6px',
-                  }}>
-                    <div style={{
-                      width: 22, height: 22, borderRadius: '50%',
-                      background: `${col.text}22`, color: col.text,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 9, fontWeight: 700,
-                    }}>
+                  <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 7, background: col.bg, border: `1px solid ${col.text}22`, borderRadius: 20, padding: '5px 10px 5px 6px' }}>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: `${col.text}22`, color: col.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>
                       {e.students?.full_name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
                     </div>
                     <span style={{ fontSize: 12, color: col.text, fontWeight: 500 }}>{e.students?.full_name}</span>
-                    <button
-                      onClick={() => setRemoveConfirmId(e.id)}
-                      style={{
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        color: `${col.text}88`, padding: 0, display: 'flex', alignItems: 'center',
-                        transition: 'color 0.15s',
-                      }}
+                    <button onClick={() => setRemoveConfirmId(e.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: `${col.text}88`, padding: 0, display: 'flex', alignItems: 'center' }}
                       onMouseEnter={ev => (ev.currentTarget.style.color = '#f87171')}
-                      onMouseLeave={ev => (ev.currentTarget.style.color = `${col.text}88`)}
-                    >
+                      onMouseLeave={ev => (ev.currentTarget.style.color = `${col.text}88`)}>
                       <X size={13} />
                     </button>
                   </div>
@@ -246,171 +186,87 @@ const LessonDetail = () => {
       </div>
 
       {/* Sessions */}
-      <div style={{
-        background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
-        borderRadius: 16, overflow: 'hidden',
-      }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)',
-          background: 'rgba(255,255,255,0.01)',
-        }}>
+      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)', flexWrap: 'wrap', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <CalendarDays size={16} color="#a78bfa" />
             <span style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>الحصص</span>
-            <span style={{
-              fontSize: 11, color: '#475569', background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: '2px 10px',
-            }}>{sessions.length}</span>
+            <span style={{ fontSize: 11, color: '#475569', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: '2px 10px' }}>{sessions.length}</span>
           </div>
-          <button
-            onClick={() => { setNewSessionDate(new Date().toISOString().split('T')[0]); setNewSessionOpen(true); }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.25)',
-              borderRadius: 8, padding: '6px 14px',
-              fontSize: 12, fontWeight: 600, color: '#a78bfa',
-              cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
+          <button onClick={() => { setNewSessionDate(new Date().toISOString().split('T')[0]); setNewSessionOpen(true); }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 600, color: '#a78bfa', cursor: 'pointer', fontFamily: 'inherit' }}>
             <Plus size={13} /> حصة جديدة
           </button>
         </div>
 
-        {/* Table header */}
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 160px 80px',
-          padding: '9px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)',
-          background: 'rgba(255,255,255,0.01)',
-        }}>
-          {['التاريخ', 'الحضور', ''].map((h, i) => (
-            <div key={i} style={{ fontSize: 11, fontWeight: 600, color: '#334155', letterSpacing: '0.05em' }}>{h}</div>
-          ))}
-        </div>
+        {/* Scrollable sessions table */}
+        <div className="ld-scroll-wrap">
+          <div className="ld-sessions-table">
+            {/* Header */}
+            <div className="ld-session-header">
+              {['التاريخ', 'الحضور', ''].map((h, i) => (
+                <div key={i} style={{ fontSize: 11, fontWeight: 600, color: '#334155', letterSpacing: '0.05em' }}>{h}</div>
+              ))}
+            </div>
 
-        {sessions.length === 0 ? (
-          <div style={{ padding: '36px 20px', textAlign: 'center', fontSize: 13, color: '#334155' }}>
-            لا توجد حصص بعد
-          </div>
-        ) : (
-          sessions.map((session, i) => {
-            const att = sessionAttendance[session.id];
-            const pct = att ? Math.round((att.present / att.total) * 100) : null;
-            const good = pct !== null && pct >= 75;
-            return (
-              <div
-                key={session.id}
-                style={{
-                  display: 'grid', gridTemplateColumns: '1fr 160px 80px',
-                  padding: '12px 20px', alignItems: 'center',
-                  borderBottom: i < sessions.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                  transition: 'background 0.12s',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: 9,
-                    background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.15)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <CalendarDays size={14} color="#a78bfa" />
-                  </div>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>{session.date}</span>
-                </div>
-
-                <div>
-                  {att ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{
-                        fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20,
-                        background: good ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
-                        border: `1px solid ${good ? 'rgba(16,185,129,0.25)' : 'rgba(245,158,11,0.25)'}`,
-                        color: good ? '#34d399' : '#fbbf24',
-                      }}>
-                        {att.present}/{att.total} حاضر
-                      </span>
-                      <div style={{ width: 40, height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${pct}%`, background: good ? '#10b981' : '#f59e0b', borderRadius: 3 }} />
+            {sessions.length === 0 ? (
+              <div style={{ padding: '36px 20px', textAlign: 'center', fontSize: 13, color: '#334155' }}>لا توجد حصص بعد</div>
+            ) : (
+              sessions.map((session, i) => {
+                const att = sessionAttendance[session.id];
+                const pct = att ? Math.round((att.present / att.total) * 100) : null;
+                const good = pct !== null && pct >= 75;
+                return (
+                  <div key={session.id} className="ld-session-row"
+                    style={{ borderBottom: i < sessions.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', transition: 'background 0.12s' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <CalendarDays size={14} color="#a78bfa" />
                       </div>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0', whiteSpace: 'nowrap' }}>{session.date}</span>
                     </div>
-                  ) : (
-                    <span style={{ fontSize: 12, color: '#334155' }}>—</span>
-                  )}
-                </div>
-
-                <div>
-                  <Link
-                    to={`/lessons/${id}/sessions/${session.id}`}
-                    style={{
-                      width: 30, height: 30, borderRadius: 8,
-                      background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.2)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#38bdf8', textDecoration: 'none',
-                    }}
-                  >
-                    <Eye size={14} />
-                  </Link>
-                </div>
-              </div>
-            );
-          })
-        )}
+                    <div>
+                      {att ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: good ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)', border: `1px solid ${good ? 'rgba(16,185,129,0.25)' : 'rgba(245,158,11,0.25)'}`, color: good ? '#34d399' : '#fbbf24', whiteSpace: 'nowrap' }}>
+                            {att.present}/{att.total} حاضر
+                          </span>
+                          <div style={{ width: 40, height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden', flexShrink: 0 }}>
+                            <div style={{ height: '100%', width: `${pct}%`, background: good ? '#10b981' : '#f59e0b', borderRadius: 3 }} />
+                          </div>
+                        </div>
+                      ) : <span style={{ fontSize: 12, color: '#334155' }}>—</span>}
+                    </div>
+                    <div>
+                      <Link to={`/lessons/${id}/sessions/${session.id}`} style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8', textDecoration: 'none' }}>
+                        <Eye size={14} />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Add Student Dialog */}
       {addStudentOpen && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 100,
-          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
-        }} onClick={e => e.target === e.currentTarget && setAddStudentOpen(false)}>
-          <div style={{
-            background: '#0f0f17', border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 18, padding: '28px', width: '100%', maxWidth: 380, direction: 'rtl',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }} onClick={e => e.target === e.currentTarget && setAddStudentOpen(false)}>
+          <div style={{ background: '#0f0f17', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 18, padding: '24px 20px', width: '100%', maxWidth: 380, direction: 'rtl' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
               <h2 style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9', margin: 0 }}>إضافة طالب للدرس</h2>
-              <button onClick={() => setAddStudentOpen(false)} style={{
-                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 8, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: '#64748b',
-              }}><X size={15} /></button>
+              <button onClick={() => setAddStudentOpen(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}><X size={15} /></button>
             </div>
-            <select
-              value={selectedStudentId}
-              onChange={e => setSelectedStudentId(e.target.value)}
-              style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}
-              onFocus={e => (e.target.style.borderColor = 'rgba(99,102,241,0.5)')}
-              onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.09)')}
-            >
+            <select value={selectedStudentId} onChange={e => setSelectedStudentId(e.target.value)} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }} onFocus={e => (e.target.style.borderColor = 'rgba(99,102,241,0.5)')} onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.09)')}>
               <option value="" style={{ background: '#0f0f17' }}>اختر طالب</option>
-              {availableStudents.map(s => (
-                <option key={s.id} value={s.id} style={{ background: '#0f0f17' }}>{s.full_name}</option>
-              ))}
+              {availableStudents.map(s => <option key={s.id} value={s.id} style={{ background: '#0f0f17' }}>{s.full_name}</option>)}
             </select>
-            <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
-              <button
-                onClick={addStudent}
-                disabled={!selectedStudentId}
-                style={{
-                  background: selectedStudentId ? 'rgba(56,189,248,0.15)' : 'rgba(56,189,248,0.05)',
-                  border: '1px solid rgba(56,189,248,0.3)',
-                  borderRadius: 10, padding: '9px 22px',
-                  fontSize: 13, fontWeight: 600,
-                  color: selectedStudentId ? '#38bdf8' : '#334155',
-                  cursor: selectedStudentId ? 'pointer' : 'not-allowed',
-                  fontFamily: 'inherit',
-                }}
-              >
-                إضافة
-              </button>
-              <button onClick={() => setAddStudentOpen(false)} style={{
-                background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 10, padding: '9px 20px',
-                fontSize: 13, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit',
-              }}>إلغاء</button>
+            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+              <button onClick={addStudent} disabled={!selectedStudentId} style={{ background: selectedStudentId ? 'rgba(56,189,248,0.15)' : 'rgba(56,189,248,0.05)', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 10, padding: '9px 22px', fontSize: 13, fontWeight: 600, color: selectedStudentId ? '#38bdf8' : '#334155', cursor: selectedStudentId ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}>إضافة</button>
+              <button onClick={() => setAddStudentOpen(false)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '9px 20px', fontSize: 13, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}>إلغاء</button>
             </div>
           </div>
         </div>
@@ -418,52 +274,16 @@ const LessonDetail = () => {
 
       {/* New Session Dialog */}
       {newSessionOpen && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 100,
-          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
-        }} onClick={e => e.target === e.currentTarget && setNewSessionOpen(false)}>
-          <div style={{
-            background: '#0f0f17', border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 18, padding: '28px', width: '100%', maxWidth: 360, direction: 'rtl',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }} onClick={e => e.target === e.currentTarget && setNewSessionOpen(false)}>
+          <div style={{ background: '#0f0f17', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 18, padding: '24px 20px', width: '100%', maxWidth: 360, direction: 'rtl' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
               <h2 style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9', margin: 0 }}>إنشاء حصة جديدة</h2>
-              <button onClick={() => setNewSessionOpen(false)} style={{
-                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 8, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: '#64748b',
-              }}><X size={15} /></button>
+              <button onClick={() => setNewSessionOpen(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}><X size={15} /></button>
             </div>
-            <input
-              type="date"
-              value={newSessionDate}
-              onChange={e => setNewSessionDate(e.target.value)}
-              style={{ ...inputStyle, colorScheme: 'dark' }}
-              onFocus={e => (e.target.style.borderColor = 'rgba(167,139,250,0.5)')}
-              onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.09)')}
-            />
-            <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
-              <button
-                onClick={createSession}
-                disabled={!newSessionDate}
-                style={{
-                  background: newSessionDate ? 'rgba(167,139,250,0.15)' : 'rgba(167,139,250,0.05)',
-                  border: '1px solid rgba(167,139,250,0.3)',
-                  borderRadius: 10, padding: '9px 22px',
-                  fontSize: 13, fontWeight: 600,
-                  color: newSessionDate ? '#a78bfa' : '#334155',
-                  cursor: newSessionDate ? 'pointer' : 'not-allowed',
-                  fontFamily: 'inherit',
-                }}
-              >
-                إنشاء
-              </button>
-              <button onClick={() => setNewSessionOpen(false)} style={{
-                background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 10, padding: '9px 20px',
-                fontSize: 13, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit',
-              }}>إلغاء</button>
+            <input type="date" value={newSessionDate} onChange={e => setNewSessionDate(e.target.value)} style={{ ...inputStyle, colorScheme: 'dark' }} onFocus={e => (e.target.style.borderColor = 'rgba(167,139,250,0.5)')} onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.09)')} />
+            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+              <button onClick={createSession} disabled={!newSessionDate} style={{ background: newSessionDate ? 'rgba(167,139,250,0.15)' : 'rgba(167,139,250,0.05)', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 10, padding: '9px 22px', fontSize: 13, fontWeight: 600, color: newSessionDate ? '#a78bfa' : '#334155', cursor: newSessionDate ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}>إنشاء</button>
+              <button onClick={() => setNewSessionOpen(false)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '9px 20px', fontSize: 13, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}>إلغاء</button>
             </div>
           </div>
         </div>
@@ -471,40 +291,14 @@ const LessonDetail = () => {
 
       {/* Remove Student Confirm */}
       {removeConfirmId && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 100,
-          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
-        }} onClick={e => e.target === e.currentTarget && setRemoveConfirmId(null)}>
-          <div style={{
-            background: '#0f0f17', border: '1px solid rgba(239,68,68,0.2)',
-            borderRadius: 18, padding: '28px', width: '100%', maxWidth: 320,
-            direction: 'rtl', textAlign: 'center',
-          }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: '50%',
-              background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px',
-            }}>
-              <Trash2 size={18} color="#f87171" />
-            </div>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }} onClick={e => e.target === e.currentTarget && setRemoveConfirmId(null)}>
+          <div style={{ background: '#0f0f17', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 18, padding: '28px', width: '100%', maxWidth: 320, direction: 'rtl', textAlign: 'center' }}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}><Trash2 size={18} color="#f87171" /></div>
             <h3 style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', margin: '0 0 8px' }}>إزالة الطالب</h3>
             <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 20px' }}>هل تريد إزالة هذا الطالب من الدرس؟</p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-              <button
-                onClick={() => removeStudent(removeConfirmId)}
-                style={{
-                  background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)',
-                  borderRadius: 10, padding: '8px 20px',
-                  fontSize: 13, fontWeight: 600, color: '#f87171',
-                  cursor: 'pointer', fontFamily: 'inherit',
-                }}
-              >نعم، إزالة</button>
-              <button onClick={() => setRemoveConfirmId(null)} style={{
-                background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 10, padding: '8px 18px',
-                fontSize: 13, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit',
-              }}>إلغاء</button>
+              <button onClick={() => removeStudent(removeConfirmId)} style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '8px 20px', fontSize: 13, fontWeight: 600, color: '#f87171', cursor: 'pointer', fontFamily: 'inherit' }}>نعم، إزالة</button>
+              <button onClick={() => setRemoveConfirmId(null)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '8px 18px', fontSize: 13, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}>إلغاء</button>
             </div>
           </div>
         </div>

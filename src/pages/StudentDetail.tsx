@@ -44,36 +44,43 @@ const StudentDetail = () => {
 
   const initials = student.full_name?.split(' ').map((n: string) => n[0]).slice(0, 2).join('') || '??';
 
-  const panel = (children: React.ReactNode) => ({
-    background: 'rgba(255,255,255,0.02)',
-    border: '1px solid rgba(255,255,255,0.07)',
-    borderRadius: 16,
-    overflow: 'hidden' as const,
-    children,
-  });
-
   return (
     <div style={{ direction: 'rtl', fontFamily: "'Cairo','Noto Sans Arabic',sans-serif" }}>
+      <style>{`
+        .sd-stat-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px;
+          margin-bottom: 20px;
+        }
+        .sd-scroll-wrap {
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+        .sd-scroll-wrap::-webkit-scrollbar { height: 4px; }
+        .sd-scroll-wrap::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+        .sd-scroll-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        .sd-table { min-width: 480px; width: 100%; }
+        @media (max-width: 639px) {
+          .sd-stat-grid { grid-template-columns: repeat(2, 1fr); }
+          .sd-back-row { margin-bottom: 16px !important; }
+        }
+      `}</style>
 
       {/* Back + title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
+      <div className="sd-back-row" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
         <Link to="/students" style={{
           width: 36, height: 36, borderRadius: 10,
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: '#64748b', textDecoration: 'none', flexShrink: 0,
-          transition: 'all 0.15s',
         }}>
           <ArrowLeft size={17} />
         </Link>
-
-        {/* Avatar + name */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{
             width: 48, height: 48, borderRadius: '50%',
-            background: 'rgba(99,102,241,0.15)',
-            border: '2px solid rgba(99,102,241,0.3)',
+            background: 'rgba(99,102,241,0.15)', border: '2px solid rgba(99,102,241,0.3)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 16, fontWeight: 700, color: '#818cf8', flexShrink: 0,
           }}>
@@ -83,20 +90,17 @@ const StudentDetail = () => {
             <h1 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', margin: 0 }}>{student.full_name}</h1>
             {student.grade_class && (
               <span style={{
-                fontSize: 11, color: '#818cf8',
-                background: 'rgba(99,102,241,0.1)',
-                border: '1px solid rgba(99,102,241,0.2)',
-                borderRadius: 20, padding: '2px 10px', marginTop: 4, display: 'inline-block',
-              }}>
-                {student.grade_class}
-              </span>
+                fontSize: 11, color: '#818cf8', background: 'rgba(99,102,241,0.1)',
+                border: '1px solid rgba(99,102,241,0.2)', borderRadius: 20,
+                padding: '2px 10px', marginTop: 4, display: 'inline-block',
+              }}>{student.grade_class}</span>
             )}
           </div>
         </div>
       </div>
 
       {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+      <div className="sd-stat-grid">
         {[
           { icon: <User size={16} color="#818cf8" />, label: 'الصف', value: student.grade_class || '—', bg: 'rgba(99,102,241,0.1)' },
           { icon: <Phone size={16} color="#38bdf8" />, label: 'الهاتف', value: student.phone || '—', bg: 'rgba(56,189,248,0.1)' },
@@ -123,150 +127,108 @@ const StudentDetail = () => {
             ),
           },
         ].map((c, i) => (
-          <div key={i} style={{
-            background: 'rgba(255,255,255,0.02)',
-            border: '1px solid rgba(255,255,255,0.07)',
-            borderRadius: 14, padding: '16px 18px',
-          }}>
-            <div style={{ width: 32, height: 32, borderRadius: 9, background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-              {c.icon}
-            </div>
+          <div key={i} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '16px 18px' }}>
+            <div style={{ width: 32, height: 32, borderRadius: 9, background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>{c.icon}</div>
             <div style={{ fontSize: 11, color: '#475569', marginBottom: 4 }}>{c.label}</div>
-            {typeof c.value === 'string'
-              ? <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0' }}>{c.value}</div>
-              : c.value}
+            {typeof c.value === 'string' ? <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0' }}>{c.value}</div> : c.value}
           </div>
         ))}
       </div>
 
-      {/* Notes */}
       {student.notes && (
-        <div style={{
-          background: 'rgba(99,102,241,0.06)',
-          border: '1px solid rgba(99,102,241,0.15)',
-          borderRadius: 12, padding: '12px 16px', marginBottom: 20,
-          fontSize: 13, color: '#94a3b8',
-        }}>
-          <span style={{ color: '#818cf8', fontWeight: 600, marginLeft: 6 }}>ملاحظات:</span>
-          {student.notes}
+        <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 12, padding: '12px 16px', marginBottom: 20, fontSize: 13, color: '#94a3b8' }}>
+          <span style={{ color: '#818cf8', fontWeight: 600, marginLeft: 6 }}>ملاحظات:</span>{student.notes}
         </div>
       )}
 
       {/* Attendance */}
       <Section title="سجل الحضور" icon={<CheckCircle size={16} color="#34d399" />} count={attendanceHistory.length}>
-        {attendanceHistory.length === 0 ? (
-          <Empty text="لا يوجد سجل حضور" />
-        ) : attendanceHistory.map((a: any, i: number) => (
-          <Row key={a.id} last={i === attendanceHistory.length - 1}
-            title={a.sessions?.lessons?.title || '—'}
-            date={a.sessions?.date}
-            right={
-              <span style={{
-                fontSize: 11, fontWeight: 600, padding: '3px 12px', borderRadius: 20,
-                background: a.status === 'present' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
-                border: `1px solid ${a.status === 'present' ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.25)'}`,
-                color: a.status === 'present' ? '#34d399' : '#f87171',
-                display: 'flex', alignItems: 'center', gap: 5,
-              }}>
-                {a.status === 'present'
-                  ? <><CheckCircle size={11} /> حاضر</>
-                  : <><XCircle size={11} /> غائب</>}
-              </span>
-            }
-          />
-        ))}
+        {attendanceHistory.length === 0 ? <Empty text="لا يوجد سجل حضور" /> : (
+          <div className="sd-scroll-wrap">
+            <div className="sd-table">
+              {attendanceHistory.map((a: any, i: number) => (
+                <Row key={a.id} last={i === attendanceHistory.length - 1}
+                  title={a.sessions?.lessons?.title || '—'} date={a.sessions?.date}
+                  right={
+                    <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 12px', borderRadius: 20, background: a.status === 'present' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', border: `1px solid ${a.status === 'present' ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.25)'}`, color: a.status === 'present' ? '#34d399' : '#f87171', display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' as const }}>
+                      {a.status === 'present' ? <><CheckCircle size={11} /> حاضر</> : <><XCircle size={11} /> غائب</>}
+                    </span>
+                  }
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </Section>
 
       {/* Homework */}
       <Section title="سجل الواجبات" icon={<BookOpen size={16} color="#fbbf24" />} count={homeworkHistory.length}>
-        {homeworkHistory.length === 0 ? (
-          <Empty text="لا يوجد سجل واجبات" />
-        ) : homeworkHistory.map((h: any, i: number) => {
-          const pct = h.max_score > 0 ? Math.round((h.score / h.max_score) * 100) : 0;
-          return (
-            <Row key={h.id} last={i === homeworkHistory.length - 1}
-              title={h.sessions?.lessons?.title || '—'}
-              date={h.sessions?.date}
-              right={
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: pct >= 60 ? '#fbbf24' : '#f87171' }}>
-                    {h.score ?? '—'} / {h.max_score}
-                  </div>
-                  <span style={{
-                    fontSize: 10, padding: '2px 8px', borderRadius: 20, display: 'inline-block', marginTop: 3,
-                    background: h.status === 'completed' ? 'rgba(16,185,129,0.1)' : 'rgba(100,116,139,0.15)',
-                    border: `1px solid ${h.status === 'completed' ? 'rgba(16,185,129,0.2)' : 'rgba(100,116,139,0.2)'}`,
-                    color: h.status === 'completed' ? '#34d399' : '#64748b',
-                  }}>
-                    {h.status === 'completed' ? 'مكتمل' : 'غير مكتمل'}
-                  </span>
-                </div>
-              }
-            />
-          );
-        })}
+        {homeworkHistory.length === 0 ? <Empty text="لا يوجد سجل واجبات" /> : (
+          <div className="sd-scroll-wrap">
+            <div className="sd-table">
+              {homeworkHistory.map((h: any, i: number) => {
+                const pct = h.max_score > 0 ? Math.round((h.score / h.max_score) * 100) : 0;
+                return (
+                  <Row key={h.id} last={i === homeworkHistory.length - 1}
+                    title={h.sessions?.lessons?.title || '—'} date={h.sessions?.date}
+                    right={
+                      <div style={{ textAlign: 'left', flexShrink: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: pct >= 60 ? '#fbbf24' : '#f87171', whiteSpace: 'nowrap' }}>{h.score ?? '—'} / {h.max_score}</div>
+                        <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, display: 'inline-block', marginTop: 3, background: h.status === 'completed' ? 'rgba(16,185,129,0.1)' : 'rgba(100,116,139,0.15)', border: `1px solid ${h.status === 'completed' ? 'rgba(16,185,129,0.2)' : 'rgba(100,116,139,0.2)'}`, color: h.status === 'completed' ? '#34d399' : '#64748b', whiteSpace: 'nowrap' as const }}>
+                          {h.status === 'completed' ? 'مكتمل' : 'غير مكتمل'}
+                        </span>
+                      </div>
+                    }
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
       </Section>
 
       {/* Feedback */}
       <Section title="سجل الملاحظات" icon={<MessageSquare size={16} color="#a78bfa" />} count={feedbackHistory.length}>
-        {feedbackHistory.length === 0 ? (
-          <Empty text="لا توجد ملاحظات" />
-        ) : feedbackHistory.map((f: any, i: number) => (
-          <div key={f.id} style={{
-            padding: '12px 20px',
-            borderBottom: i < feedbackHistory.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>{f.sessions?.lessons?.title || '—'}</span>
-              <span style={{ fontSize: 11, color: '#475569' }}>{f.sessions?.date}</span>
+        {feedbackHistory.length === 0 ? <Empty text="لا توجد ملاحظات" /> : (
+          <div className="sd-scroll-wrap">
+            <div className="sd-table">
+              {feedbackHistory.map((f: any, i: number) => (
+                <div key={f.id} style={{ padding: '12px 20px', borderBottom: i < feedbackHistory.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, gap: 12 }}>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0', whiteSpace: 'nowrap' }}>{f.sessions?.lessons?.title || '—'}</span>
+                    <span style={{ fontSize: 11, color: '#475569', whiteSpace: 'nowrap' }}>{f.sessions?.date}</span>
+                  </div>
+                  <p style={{ fontSize: 13, color: '#64748b', margin: 0, lineHeight: 1.6 }}>{f.comment}</p>
+                </div>
+              ))}
             </div>
-            <p style={{ fontSize: 13, color: '#64748b', margin: 0, lineHeight: 1.6 }}>{f.comment}</p>
           </div>
-        ))}
+        )}
       </Section>
     </div>
   );
 };
 
 const Section = ({ title, icon, count, children }: { title: string; icon: React.ReactNode; count: number; children: React.ReactNode }) => (
-  <div style={{
-    background: 'rgba(255,255,255,0.02)',
-    border: '1px solid rgba(255,255,255,0.07)',
-    borderRadius: 16, overflow: 'hidden', marginBottom: 16,
-  }}>
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '14px 20px',
-      borderBottom: '1px solid rgba(255,255,255,0.05)',
-      background: 'rgba(255,255,255,0.01)',
-    }}>
+  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden', marginBottom: 16 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {icon}
         <span style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>{title}</span>
       </div>
-      <span style={{
-        fontSize: 11, color: '#475569',
-        background: 'rgba(255,255,255,0.05)',
-        border: '1px solid rgba(255,255,255,0.07)',
-        borderRadius: 20, padding: '2px 10px',
-      }}>{count}</span>
+      <span style={{ fontSize: 11, color: '#475569', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: '2px 10px' }}>{count}</span>
     </div>
     {children}
   </div>
 );
 
 const Row = ({ title, date, right, last }: { title: string; date?: string; right: React.ReactNode; last: boolean }) => (
-  <div style={{
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '12px 20px',
-    borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.04)',
-    transition: 'background 0.12s',
-  }}
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.04)', gap: 16 }}
     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
   >
-    <div>
-      <div style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>{title}</div>
+    <div style={{ flex: 1, minWidth: 120 }}>
+      <div style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0', whiteSpace: 'nowrap' }}>{title}</div>
       {date && <div style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>{date}</div>}
     </div>
     {right}

@@ -53,6 +53,14 @@ const Students = () => {
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const fetchStudents = async () => {
     const { data } = await supabase.from('students').select('*').order('created_at', { ascending: false });
@@ -130,6 +138,69 @@ const Students = () => {
   return (
     <div style={{ direction: 'rtl', fontFamily: "'Cairo','Noto Sans Arabic',sans-serif" }}>
 
+      {/* ── Responsive styles ── */}
+      <style>{`
+        .students-search { max-width: 320px; }
+
+        /* Desktop table */
+        .students-table-header,
+        .students-table-row {
+          display: grid;
+          grid-template-columns: 1fr 130px 130px 100px 110px;
+          padding: 10px 20px;
+          align-items: center;
+        }
+        .students-table-header {
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          background: rgba(255,255,255,0.02);
+        }
+        .students-table-row {
+          padding: 13px 20px;
+        }
+
+        /* Mobile card list — hidden by default */
+        .student-card { display: none; }
+
+        @media (max-width: 639px) {
+          .students-search { max-width: 100%; }
+
+          /* Hide table view */
+          .students-table-header { display: none; }
+          .students-table-row    { display: none; }
+
+          /* Show card view */
+          .student-card {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+          }
+          .student-card:last-child { border-bottom: none; }
+
+          .student-card-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          }
+
+          .student-card-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 12px;
+            padding-right: 44px; /* align under name */
+          }
+
+          .student-card-actions {
+            display: flex;
+            gap: 8px;
+            padding-right: 44px;
+          }
+
+          .students-add-btn span { display: none; }
+        }
+      `}</style>
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
         <div>
@@ -137,6 +208,7 @@ const Students = () => {
           <p style={{ fontSize: 13, color: '#475569', marginTop: 3 }}>{students.length} طالب مسجل</p>
         </div>
         <button
+          className="students-add-btn"
           onClick={() => { setEditingId(null); setForm(emptyForm); setDialogOpen(true); }}
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
@@ -151,12 +223,12 @@ const Students = () => {
           onMouseLeave={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.15)')}
         >
           <Plus size={16} />
-          إضافة طالب
+          <span>إضافة طالب</span>
         </button>
       </div>
 
       {/* Search */}
-      <div style={{ position: 'relative', maxWidth: 320, marginBottom: 20 }}>
+      <div className="students-search" style={{ position: 'relative', marginBottom: 20 }}>
         <Search size={15} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#475569', pointerEvents: 'none' }} />
         <input
           placeholder="بحث بالاسم أو الصف..."
@@ -168,27 +240,21 @@ const Students = () => {
         />
       </div>
 
-      {/* Table card */}
+      {/* Table / Card container */}
       <div style={{
         background: 'rgba(255,255,255,0.02)',
         border: '1px solid rgba(255,255,255,0.07)',
         borderRadius: 16,
         overflow: 'hidden',
       }}>
-        {/* Table header */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 130px 130px 100px 110px',
-          padding: '10px 20px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-          background: 'rgba(255,255,255,0.02)',
-        }}>
+
+        {/* ── Desktop table header ── */}
+        <div className="students-table-header">
           {['الاسم', 'الهاتف', 'ولي الأمر', 'الصف', 'إجراءات'].map((h, i) => (
             <div key={i} style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</div>
           ))}
         </div>
 
-        {/* Rows */}
         {filtered.length === 0 ? (
           <div style={{ padding: '48px 20px', textAlign: 'center' }}>
             <GraduationCap size={36} style={{ color: '#1e293b', margin: '0 auto 12px' }} />
@@ -197,80 +263,111 @@ const Students = () => {
         ) : (
           filtered.map((student, idx) => {
             const col = avatarColors[idx % avatarColors.length];
+            const actionBtns = [
+              { icon: <Eye size={15} />, color: '#38bdf8', bg: 'rgba(56,189,248,0.1)', border: 'rgba(56,189,248,0.2)', as: 'link' as const, to: `/students/${student.id}` },
+              { icon: <Pencil size={15} />, color: '#a78bfa', bg: 'rgba(167,139,250,0.1)', border: 'rgba(167,139,250,0.2)', onClick: () => handleEdit(student) },
+              { icon: <Trash2 size={15} />, color: '#f87171', bg: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.2)', onClick: () => setDeleteConfirmId(student.id) },
+            ];
+
             return (
-              <div
-                key={student.id}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 130px 130px 100px 110px',
-                  padding: '13px 20px',
-                  borderBottom: idx < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                  alignItems: 'center',
-                  transition: 'background 0.12s',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.025)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                {/* Name + avatar */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 34, height: 34, borderRadius: '50%',
-                    background: col.bg, color: col.text,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 700, flexShrink: 0,
-                  }}>
-                    {getInitials(student.full_name)}
-                  </div>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>{student.full_name}</span>
-                </div>
+              <div key={student.id}>
 
-                <span style={{ fontSize: 12, color: '#64748b' }}>{student.phone || '—'}</span>
-                <span style={{ fontSize: 12, color: '#64748b' }}>{student.parent_phone || '—'}</span>
-
-                {/* Grade badge */}
-                <div>
-                  {student.grade_class ? (
-                    <span style={{
-                      background: 'rgba(99,102,241,0.1)',
-                      border: '1px solid rgba(99,102,241,0.2)',
-                      color: '#818cf8', fontSize: 11,
-                      padding: '3px 10px', borderRadius: 20,
+                {/* ── Desktop row ── */}
+                <div
+                  className="students-table-row"
+                  style={{ borderBottom: idx < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', transition: 'background 0.12s' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.025)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{
+                      width: 34, height: 34, borderRadius: '50%',
+                      background: col.bg, color: col.text,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 11, fontWeight: 700, flexShrink: 0,
                     }}>
-                      {student.grade_class}
-                    </span>
-                  ) : (
-                    <span style={{ fontSize: 12, color: '#334155' }}>—</span>
-                  )}
+                      {getInitials(student.full_name)}
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>{student.full_name}</span>
+                  </div>
+
+                  <span style={{ fontSize: 12, color: '#64748b' }}>{student.phone || '—'}</span>
+                  <span style={{ fontSize: 12, color: '#64748b' }}>{student.parent_phone || '—'}</span>
+
+                  <div>
+                    {student.grade_class ? (
+                      <span style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', color: '#818cf8', fontSize: 11, padding: '3px 10px', borderRadius: 20 }}>
+                        {student.grade_class}
+                      </span>
+                    ) : <span style={{ fontSize: 12, color: '#334155' }}>—</span>}
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    {actionBtns.map((btn, bi) =>
+                      btn.as === 'link' ? (
+                        <Link key={bi} to={btn.to!} style={{ width: 30, height: 30, borderRadius: 8, background: btn.bg, border: `1px solid ${btn.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: btn.color, textDecoration: 'none', flexShrink: 0 }}>
+                          {btn.icon}
+                        </Link>
+                      ) : (
+                        <button key={bi} onClick={btn.onClick} style={{ width: 30, height: 30, borderRadius: 8, background: btn.bg, border: `1px solid ${btn.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: btn.color, cursor: 'pointer', flexShrink: 0 }}>
+                          {btn.icon}
+                        </button>
+                      )
+                    )}
+                  </div>
                 </div>
 
-                {/* Actions */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  {[
-                    { icon: <Eye size={15} />, color: '#38bdf8', bg: 'rgba(56,189,248,0.1)', border: 'rgba(56,189,248,0.2)', as: 'link', to: `/students/${student.id}` },
-                    { icon: <Pencil size={15} />, color: '#a78bfa', bg: 'rgba(167,139,250,0.1)', border: 'rgba(167,139,250,0.2)', onClick: () => handleEdit(student) },
-                    { icon: <Trash2 size={15} />, color: '#f87171', bg: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.2)', onClick: () => setDeleteConfirmId(student.id) },
-                  ].map((btn, bi) =>
-                    btn.as === 'link' ? (
-                      <Link key={bi} to={btn.to!} style={{
-                        width: 30, height: 30, borderRadius: 8,
-                        background: btn.bg, border: `1px solid ${btn.border}`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: btn.color, textDecoration: 'none', flexShrink: 0,
-                      }}>
-                        {btn.icon}
-                      </Link>
-                    ) : (
-                      <button key={bi} onClick={btn.onClick} style={{
-                        width: 30, height: 30, borderRadius: 8,
-                        background: btn.bg, border: `1px solid ${btn.border}`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: btn.color, cursor: 'pointer', flexShrink: 0,
-                      }}>
-                        {btn.icon}
-                      </button>
-                    )
-                  )}
+                {/* ── Mobile card ── */}
+                <div className="student-card">
+                  <div className="student-card-top">
+                    <div style={{
+                      width: 36, height: 36, borderRadius: '50%',
+                      background: col.bg, color: col.text,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 12, fontWeight: 700, flexShrink: 0,
+                    }}>
+                      {getInitials(student.full_name)}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0' }}>{student.full_name}</div>
+                      {student.grade_class && (
+                        <span style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', color: '#818cf8', fontSize: 10, padding: '2px 8px', borderRadius: 20, marginTop: 3, display: 'inline-block' }}>
+                          {student.grade_class}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="student-card-meta">
+                    {student.phone && (
+                      <div>
+                        <div style={{ fontSize: 10, color: '#475569', marginBottom: 2 }}>الهاتف</div>
+                        <div style={{ fontSize: 12, color: '#94a3b8' }}>{student.phone}</div>
+                      </div>
+                    )}
+                    {student.parent_phone && (
+                      <div>
+                        <div style={{ fontSize: 10, color: '#475569', marginBottom: 2 }}>ولي الأمر</div>
+                        <div style={{ fontSize: 12, color: '#94a3b8' }}>{student.parent_phone}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="student-card-actions">
+                    {actionBtns.map((btn, bi) =>
+                      btn.as === 'link' ? (
+                        <Link key={bi} to={btn.to!} style={{ width: 32, height: 32, borderRadius: 8, background: btn.bg, border: `1px solid ${btn.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: btn.color, textDecoration: 'none' }}>
+                          {btn.icon}
+                        </Link>
+                      ) : (
+                        <button key={bi} onClick={btn.onClick} style={{ width: 32, height: 32, borderRadius: 8, background: btn.bg, border: `1px solid ${btn.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: btn.color, cursor: 'pointer' }}>
+                          {btn.icon}
+                        </button>
+                      )
+                    )}
+                  </div>
                 </div>
+
               </div>
             );
           })
@@ -283,17 +380,17 @@ const Students = () => {
           position: 'fixed', inset: 0, zIndex: 100,
           background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: 20,
+          padding: 16,
         }} onClick={e => e.target === e.currentTarget && setDialogOpen(false)}>
           <div style={{
             background: '#0f0f17',
             border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 18, padding: '28px 28px 24px',
+            borderRadius: 18, padding: '24px 20px',
             width: '100%', maxWidth: 440,
             direction: 'rtl',
+            maxHeight: '90vh', overflowY: 'auto',
           }}>
-            {/* Dialog header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', margin: 0 }}>
                 {editingId ? 'تعديل بيانات الطالب' : 'إضافة طالب جديد'}
               </h2>
@@ -307,10 +404,9 @@ const Students = () => {
               </button>
             </div>
 
-            {/* Fields */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
-                { key: 'full_name', placeholder: 'الاسم الكامل *', required: true },
+                { key: 'full_name', placeholder: 'الاسم الكامل *' },
                 { key: 'phone', placeholder: 'رقم الهاتف' },
                 { key: 'parent_phone', placeholder: 'هاتف ولي الأمر' },
                 { key: 'grade_class', placeholder: 'الصف / الفصل' },
@@ -336,8 +432,7 @@ const Students = () => {
               />
             </div>
 
-            {/* Footer */}
-            <div style={{ display: 'flex', gap: 10, marginTop: 22, justifyContent: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'flex-start' }}>
               <button
                 onClick={handleSave}
                 disabled={loading || !form.full_name.trim()}
@@ -376,7 +471,7 @@ const Students = () => {
           position: 'fixed', inset: 0, zIndex: 100,
           background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: 20,
+          padding: 16,
         }} onClick={e => e.target === e.currentTarget && setDeleteConfirmId(null)}>
           <div style={{
             background: '#0f0f17',
