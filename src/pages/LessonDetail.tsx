@@ -11,6 +11,12 @@ const inputStyle: React.CSSProperties = {
   outline: 'none', fontFamily: 'inherit', transition: 'border-color 0.15s', boxSizing: 'border-box' as const,
 };
 
+const GRADES = [
+  { group: 'المرحلة الابتدائية', items: ['الأول الابتدائي','الثاني الابتدائي','الثالث الابتدائي','الرابع الابتدائي','الخامس الابتدائي','السادس الابتدائي'] },
+  { group: 'المرحلة الإعدادية', items: ['الأول الإعدادي','الثاني الإعدادي','الثالث الإعدادي'] },
+  { group: 'المرحلة الثانوية',  items: ['الأول الثانوي','الثاني الثانوي','الثالث الثانوي'] },
+];
+
 const LessonDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -25,6 +31,8 @@ const LessonDetail = () => {
   const [newSessionOpen, setNewSessionOpen] = useState(false);
   const [sessionAttendance, setSessionAttendance] = useState<Record<string, { present: number; total: number }>>({});
   const [removeConfirmId, setRemoveConfirmId] = useState<string | null>(null);
+  const [gradeFilter, setGradeFilter] = useState('');
+  const [addStudentGradeFilter, setAddStudentGradeFilter] = useState('');
 
   const fetchAll = async () => {
     if (!id || !user) return;
@@ -32,7 +40,7 @@ const LessonDetail = () => {
       supabase.from('lessons').select('*').eq('id', id).single(),
       supabase.from('sessions').select('*').eq('lesson_id', id).order('date', { ascending: false }),
       supabase.from('lesson_students').select('*, students(id, full_name, grade_class)').eq('lesson_id', id),
-      supabase.from('students').select('id, full_name'),
+      supabase.from('students').select('id, full_name, grade_class'),
     ]);
     if (lessonRes.data) setLesson(lessonRes.data);
     if (sessionsRes.data) setSessions(sessionsRes.data);
@@ -64,7 +72,7 @@ const LessonDetail = () => {
     if (!selectedStudentId) return;
     const { error } = await supabase.from('lesson_students').insert({ lesson_id: id!, student_id: selectedStudentId });
     if (error) { toast({ title: 'خطأ', description: error.message, variant: 'destructive' }); }
-    else { toast({ title: 'تم إضافة الطالب' }); setAddStudentOpen(false); setSelectedStudentId(''); fetchAll(); }
+    else { toast({ title: 'تم إضافة الطالب' }); setAddStudentOpen(false); setSelectedStudentId(''); setAddStudentGradeFilter(''); fetchAll(); }
   };
 
   const removeStudent = async (lsId: string) => {
@@ -83,11 +91,34 @@ const LessonDetail = () => {
   const enrolledIds = enrolledStudents.map(e => e.student_id);
   const availableStudents = allStudents.filter(s => !enrolledIds.includes(s.id));
 
+  // فلتر الطلاب المسجلين
+  const enrolledGrades = [...new Set(
+    enrolledStudents.map(e => e.students?.grade_class).filter(Boolean)
+  )] as string[];
+  const filteredEnrolled = gradeFilter
+    ? enrolledStudents.filter(e => e.students?.grade_class === gradeFilter)
+    : enrolledStudents;
+
+  // فلتر الطلاب في داياولوج الإضافة
+  const filteredAvailable = addStudentGradeFilter
+    ? availableStudents.filter(s => s.grade_class === addStudentGradeFilter)
+    : availableStudents;
+
   const avatarColors = [
     { bg: '#1e3a5f', text: '#60a5fa' }, { bg: '#1a3d2b', text: '#4ade80' },
     { bg: '#2d1f4e', text: '#a78bfa' }, { bg: '#3d2a0a', text: '#fbbf24' },
     { bg: '#3d1a2e', text: '#f472b6' }, { bg: '#1a2d3d', text: '#38bdf8' },
   ];
+
+  const selectStyle: React.CSSProperties = {
+    ...inputStyle,
+    cursor: 'pointer',
+    appearance: 'none' as any,
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'left 12px center',
+    paddingLeft: 32,
+  };
 
   if (!lesson) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: '#475569', fontFamily: "'Cairo',sans-serif" }}>
@@ -98,27 +129,13 @@ const LessonDetail = () => {
   return (
     <div style={{ direction: 'rtl', fontFamily: "'Cairo','Noto Sans Arabic',sans-serif" }}>
       <style>{`
-        .ld-scroll-wrap {
-          overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
-        }
+        .ld-scroll-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .ld-scroll-wrap::-webkit-scrollbar { height: 4px; }
         .ld-scroll-wrap::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
         .ld-scroll-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
         .ld-sessions-table { min-width: 460px; width: 100%; }
-        .ld-session-row {
-          display: grid;
-          grid-template-columns: 1fr 160px 50px;
-          padding: 12px 20px;
-          align-items: center;
-        }
-        .ld-session-header {
-          display: grid;
-          grid-template-columns: 1fr 160px 50px;
-          padding: 9px 20px;
-          border-bottom: 1px solid rgba(255,255,255,0.04);
-          background: rgba(255,255,255,0.01);
-        }
+        .ld-session-row { display: grid; grid-template-columns: 1fr 160px 50px; padding: 12px 20px; align-items: center; }
+        .ld-session-header { display: grid; grid-template-columns: 1fr 160px 50px; padding: 9px 20px; border-bottom: 1px solid rgba(255,255,255,0.04); background: rgba(255,255,255,0.01); }
       `}</style>
 
       {/* Header */}
@@ -153,18 +170,51 @@ const LessonDetail = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Users size={16} color="#38bdf8" />
             <span style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>الطلاب المسجلين</span>
-            <span style={{ fontSize: 11, color: '#475569', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: '2px 10px' }}>{enrolledStudents.length}</span>
+            <span style={{ fontSize: 11, color: '#475569', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: '2px 10px' }}>
+              {filteredEnrolled.length}{gradeFilter ? `/${enrolledStudents.length}` : ''}
+            </span>
           </div>
-          <button onClick={() => setAddStudentOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.25)', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 600, color: '#38bdf8', cursor: 'pointer', fontFamily: 'inherit' }}>
-            <Plus size={13} /> إضافة طالب
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            {enrolledGrades.length > 0 && (
+              <select
+                value={gradeFilter}
+                onChange={e => setGradeFilter(e.target.value)}
+                style={{
+                  background: gradeFilter ? 'rgba(56,189,248,0.1)' : 'rgba(255,255,255,0.04)',
+                  border: gradeFilter ? '1px solid rgba(56,189,248,0.35)' : '1px solid rgba(255,255,255,0.09)',
+                  borderRadius: 8, padding: '5px 10px',
+                  fontSize: 12, color: gradeFilter ? '#38bdf8' : '#64748b',
+                  cursor: 'pointer', fontFamily: 'inherit', outline: 'none',
+                  appearance: 'none' as any,
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'left 8px center',
+                  paddingLeft: 24,
+                }}
+              >
+                <option value="" style={{ background: '#0f0f17', color: '#e2e8f0' }}>كل الصفوف</option>
+                {GRADES.map(group => (
+                  <optgroup key={group.group} label={group.group} style={{ background: '#0f0f17', color: '#475569' }}>
+                    {group.items.filter(g => enrolledGrades.includes(g)).map(g => (
+                      <option key={g} value={g} style={{ background: '#0f0f17', color: '#e2e8f0' }}>{g}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            )}
+            <button onClick={() => setAddStudentOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.25)', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 600, color: '#38bdf8', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <Plus size={13} /> إضافة طالب
+            </button>
+          </div>
         </div>
         <div style={{ padding: '16px 20px' }}>
-          {enrolledStudents.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#334155', textAlign: 'center', padding: '16px 0' }}>لا يوجد طلاب مسجلين</p>
+          {filteredEnrolled.length === 0 ? (
+            <p style={{ fontSize: 13, color: '#334155', textAlign: 'center', padding: '16px 0' }}>
+              {gradeFilter ? `لا يوجد طلاب في ${gradeFilter}` : 'لا يوجد طلاب مسجلين'}
+            </p>
           ) : (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {enrolledStudents.map((e: any, i: number) => {
+              {filteredEnrolled.map((e: any, i: number) => {
                 const col = avatarColors[i % avatarColors.length];
                 return (
                   <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 7, background: col.bg, border: `1px solid ${col.text}22`, borderRadius: 20, padding: '5px 10px 5px 6px' }}>
@@ -198,17 +248,13 @@ const LessonDetail = () => {
             <Plus size={13} /> حصة جديدة
           </button>
         </div>
-
-        {/* Scrollable sessions table */}
         <div className="ld-scroll-wrap">
           <div className="ld-sessions-table">
-            {/* Header */}
             <div className="ld-session-header">
               {['التاريخ', 'الحضور', ''].map((h, i) => (
                 <div key={i} style={{ fontSize: 11, fontWeight: 600, color: '#334155', letterSpacing: '0.05em' }}>{h}</div>
               ))}
             </div>
-
             {sessions.length === 0 ? (
               <div style={{ padding: '36px 20px', textAlign: 'center', fontSize: 13, color: '#334155' }}>لا توجد حصص بعد</div>
             ) : (
@@ -258,15 +304,50 @@ const LessonDetail = () => {
           <div style={{ background: '#0f0f17', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 18, padding: '24px 20px', width: '100%', maxWidth: 380, direction: 'rtl' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
               <h2 style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9', margin: 0 }}>إضافة طالب للدرس</h2>
-              <button onClick={() => setAddStudentOpen(false)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}><X size={15} /></button>
+              <button onClick={() => { setAddStudentOpen(false); setAddStudentGradeFilter(''); setSelectedStudentId(''); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}><X size={15} /></button>
             </div>
-            <select value={selectedStudentId} onChange={e => setSelectedStudentId(e.target.value)} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }} onFocus={e => (e.target.style.borderColor = 'rgba(99,102,241,0.5)')} onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.09)')}>
-              <option value="" style={{ background: '#0f0f17' }}>اختر طالب</option>
-              {availableStudents.map(s => <option key={s.id} value={s.id} style={{ background: '#0f0f17' }}>{s.full_name}</option>)}
-            </select>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* فلتر الصف */}
+              <select
+                value={addStudentGradeFilter}
+                onChange={e => { setAddStudentGradeFilter(e.target.value); setSelectedStudentId(''); }}
+                style={selectStyle}
+                onFocus={e => (e.currentTarget.style.borderColor = 'rgba(99,102,241,0.5)')}
+                onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)')}
+              >
+                <option value="" style={{ background: '#0f0f17' }}>فلتر بالصف (اختياري)</option>
+                {GRADES.map(group => (
+                  <optgroup key={group.group} label={group.group} style={{ background: '#0f0f17', color: '#475569' }}>
+                    {group.items.map(g => (
+                      <option key={g} value={g} style={{ background: '#0f0f17', color: '#e2e8f0' }}>{g}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+
+              {/* اختيار الطالب */}
+              <select
+                value={selectedStudentId}
+                onChange={e => setSelectedStudentId(e.target.value)}
+                style={selectStyle}
+                onFocus={e => (e.currentTarget.style.borderColor = 'rgba(56,189,248,0.5)')}
+                onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)')}
+              >
+                <option value="" style={{ background: '#0f0f17' }}>
+                  {filteredAvailable.length === 0 ? 'لا يوجد طلاب متاحين' : 'اختر طالب'}
+                </option>
+                {filteredAvailable.map(s => (
+                  <option key={s.id} value={s.id} style={{ background: '#0f0f17', color: '#e2e8f0' }}>
+                    {s.full_name}{s.grade_class ? ` — ${s.grade_class}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
               <button onClick={addStudent} disabled={!selectedStudentId} style={{ background: selectedStudentId ? 'rgba(56,189,248,0.15)' : 'rgba(56,189,248,0.05)', border: '1px solid rgba(56,189,248,0.3)', borderRadius: 10, padding: '9px 22px', fontSize: 13, fontWeight: 600, color: selectedStudentId ? '#38bdf8' : '#334155', cursor: selectedStudentId ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}>إضافة</button>
-              <button onClick={() => setAddStudentOpen(false)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '9px 20px', fontSize: 13, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}>إلغاء</button>
+              <button onClick={() => { setAddStudentOpen(false); setAddStudentGradeFilter(''); setSelectedStudentId(''); }} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '9px 20px', fontSize: 13, color: '#64748b', cursor: 'pointer', fontFamily: 'inherit' }}>إلغاء</button>
             </div>
           </div>
         </div>
