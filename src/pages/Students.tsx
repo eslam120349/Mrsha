@@ -404,33 +404,67 @@ const Students = () => {
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {[
-                { key: 'full_name', placeholder: 'الاسم الكامل *' },
-                { key: 'phone', placeholder: 'رقم الهاتف' },
-                { key: 'parent_phone', placeholder: 'هاتف ولي الأمر' },
-                { key: 'grade_class', placeholder: 'الصف / الفصل' },
-              ].map(field => (
-                <input
-                  key={field.key}
-                  placeholder={field.placeholder}
-                  value={form[field.key as keyof typeof form]}
-                  onChange={e => setForm({ ...form, [field.key]: e.target.value })}
-                  style={inputStyle}
-                  onFocus={e => (e.target.style.borderColor = 'rgba(99,102,241,0.5)')}
-                  onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.09)')}
-                />
-              ))}
-              <textarea
-                placeholder="ملاحظات"
-                value={form.notes}
-                onChange={e => setForm({ ...form, notes: e.target.value })}
-                rows={3}
-                style={{ ...inputStyle, resize: 'none', lineHeight: 1.6 }}
-                onFocus={e => (e.target.style.borderColor = 'rgba(99,102,241,0.5)')}
-                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.09)')}
-              />
-            </div>
+<div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+  {[
+    { key: 'full_name', placeholder: 'الاسم الكامل *' },
+    { key: 'phone', placeholder: 'رقم الهاتف' },
+    { key: 'parent_phone', placeholder: 'هاتف ولي الأمر' },
+  ].map(field => (
+    <input
+      key={field.key}
+      placeholder={field.placeholder}
+      value={form[field.key as keyof typeof form]}
+      onChange={e => setForm({ ...form, [field.key]: e.target.value })}
+      style={inputStyle}
+      onFocus={e => (e.target.style.borderColor = 'rgba(99,102,241,0.5)')}
+      onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.09)')}
+    />
+  ))}
+
+  {/* Dropdown الصف */}
+  <select
+    value={form.grade_class}
+    onChange={e => setForm({ ...form, grade_class: e.target.value })}
+    style={{
+      ...inputStyle,
+      cursor: 'pointer',
+      appearance: 'none',
+      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'left 12px center',
+      paddingLeft: 32,
+    }}
+    onFocus={e => (e.currentTarget.style.borderColor = 'rgba(99,102,241,0.5)')}
+    onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)')}
+  >
+    <option value="" style={{ background: '#0f0f17' }}>الصف / الفصل</option>
+    <optgroup label="المرحلة الابتدائية" style={{ background: '#0f0f17', color: '#475569' }}>
+      {['الأول الابتدائي','الثاني الابتدائي','الثالث الابتدائي','الرابع الابتدائي','الخامس الابتدائي','السادس الابتدائي'].map(g => (
+        <option key={g} value={g} style={{ background: '#0f0f17', color: '#e2e8f0' }}>{g}</option>
+      ))}
+    </optgroup>
+    <optgroup label="المرحلة الإعدادية" style={{ background: '#0f0f17', color: '#475569' }}>
+      {['الأول الإعدادي','الثاني الإعدادي','الثالث الإعدادي'].map(g => (
+        <option key={g} value={g} style={{ background: '#0f0f17', color: '#e2e8f0' }}>{g}</option>
+      ))}
+    </optgroup>
+    <optgroup label="المرحلة الثانوية" style={{ background: '#0f0f17', color: '#475569' }}>
+      {['الأول الثانوي','الثاني الثانوي','الثالث الثانوي'].map(g => (
+        <option key={g} value={g} style={{ background: '#0f0f17', color: '#e2e8f0' }}>{g}</option>
+      ))}
+    </optgroup>
+  </select>
+
+  <textarea
+    placeholder="ملاحظات"
+    value={form.notes}
+    onChange={e => setForm({ ...form, notes: e.target.value })}
+    rows={3}
+    style={{ ...inputStyle, resize: 'none', lineHeight: 1.6 }}
+    onFocus={e => (e.target.style.borderColor = 'rgba(99,102,241,0.5)')}
+    onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.09)')}
+  />
+</div>
 
             <div style={{ display: 'flex', gap: 10, marginTop: 20, justifyContent: 'flex-start' }}>
               <button
