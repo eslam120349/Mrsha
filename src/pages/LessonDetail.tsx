@@ -25,6 +25,7 @@ const LessonDetail = () => {
   const [sessions, setSessions] = useState<any[]>([]);
   const [enrolledStudents, setEnrolledStudents] = useState<any[]>([]);
   const [allStudents, setAllStudents] = useState<any[]>([]);
+  const [allEnrolledIds, setAllEnrolledIds] = useState<string[]>([]); // ← جديد: كل الطلاب المسجلين في أي درس
   const [addStudentOpen, setAddStudentOpen] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [newSessionDate, setNewSessionDate] = useState('');
@@ -36,16 +37,18 @@ const LessonDetail = () => {
 
   const fetchAll = async () => {
     if (!id || !user) return;
-    const [lessonRes, sessionsRes, enrolledRes, allStudentsRes] = await Promise.all([
+    const [lessonRes, sessionsRes, enrolledRes, allStudentsRes, allEnrolledRes] = await Promise.all([
       supabase.from('lessons').select('*').eq('id', id).single(),
       supabase.from('sessions').select('*').eq('lesson_id', id).order('date', { ascending: false }),
       supabase.from('lesson_students').select('*, students(id, full_name, grade_class)').eq('lesson_id', id),
       supabase.from('students').select('id, full_name, grade_class'),
+      supabase.from('lesson_students').select('student_id'), // ← جديد: كل المسجلين في أي درس
     ]);
     if (lessonRes.data) setLesson(lessonRes.data);
     if (sessionsRes.data) setSessions(sessionsRes.data);
     if (enrolledRes.data) setEnrolledStudents(enrolledRes.data);
     if (allStudentsRes.data) setAllStudents(allStudentsRes.data);
+    if (allEnrolledRes.data) setAllEnrolledIds(allEnrolledRes.data.map((e: any) => e.student_id)); // ← جديد
   };
 
   useEffect(() => { fetchAll(); }, [id, user]);
@@ -88,8 +91,8 @@ const LessonDetail = () => {
     else { toast({ title: 'تم إنشاء الحصة' }); setNewSessionOpen(false); setNewSessionDate(''); fetchAll(); }
   };
 
-  const enrolledIds = enrolledStudents.map(e => e.student_id);
-  const availableStudents = allStudents.filter(s => !enrolledIds.includes(s.id));
+  // ← التغيير الرئيسي: استثناء أي طالب مسجل في أي درس (مش بس الدرس الحالي)
+  const availableStudents = allStudents.filter(s => !allEnrolledIds.includes(s.id));
 
   // فلتر الطلاب المسجلين
   const enrolledGrades = [...new Set(
