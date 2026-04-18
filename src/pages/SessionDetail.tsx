@@ -80,17 +80,22 @@ const SessionDetail = () => {
 
     const hasFeedback = r.feedback_comment.trim().length > 0;
     let msg = '';
+    
+    // رابط بوابة ولي الأمر (يجب تعديل النطاق ليطابق رابط المشروع المنفصل عند رفعه)
+    const parentPortalUrl = `https://sh-2otb.vercel.app/student/${r.student_id}`;
 
     if (r.attendance_status === 'present'){
     msg =
       `ولي أمر الطالب ${r.full_name}، قد حصل ${r.full_name} على ${r.homework_score || '—'} من ${r.homework_max}` +
       ` وقد حضر الحصة ${session.date}` +
-      (hasFeedback ? ` وتعليقي على الحصة: ${r.feedback_comment}` : '');
+      (hasFeedback ? ` وتعليقي على الحصة: ${r.feedback_comment}` : '') +
+      `\n\nلمتابعة التقرير الشامل للطالب، يرجى الدخول إلى الرابط التالي:\n${parentPortalUrl}\n\nتحيات مستر شعبان قطب`;
  ;}else if(r.attendance_status === 'absent'){
     msg =
       `ولى الأمر ${r.full_name} الطالب ${r.full_name} لم يحضر الحصه يوم ` +
       `  ${session.date}` +
-      (hasFeedback ? ` وتعليقي على الغياب: ${r.feedback_comment}` : '');
+      (hasFeedback ? ` وتعليقي على الغياب: ${r.feedback_comment}` : '') +
+      `\n\nلمتابعة التقرير الشامل للطالب، يرجى الدخول إلى الرابط التالي:\n${parentPortalUrl}\n\nتحيات مستر شعبان قطب`;
  ;}
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
