@@ -80,23 +80,22 @@ const SessionDetail = () => {
 
     const hasFeedback = r.feedback_comment.trim().length > 0;
     let msg = '';
-    
-    // رابط بوابة ولي الأمر (يجب تعديل النطاق ليطابق رابط المشروع المنفصل عند رفعه)
-    const parentPortalUrl = `https://sh-2otb.vercel.app/student/${r.student_id}`;
 
-    if (r.attendance_status === 'present'){
-    msg =
-      `ولي أمر الطالب ${r.full_name}، قد حصل ${r.full_name} على ${r.homework_score || '—'} من ${r.homework_max}` +
-      ` وقد حضر الحصة ${session.date}` +
-      (hasFeedback ? ` وتعليقي على الحصة: ${r.feedback_comment}` : '') +
-      `\n\nلمتابعة التقرير الشامل للطالب، يرجى الدخول إلى الرابط التالي:\n${parentPortalUrl}\n\nتحيات مستر شعبان قطب`;
- ;}else if(r.attendance_status === 'absent'){
-    msg =
-      `ولى الأمر ${r.full_name} الطالب ${r.full_name} لم يحضر الحصه يوم ` +
-      `  ${session.date}` +
-      (hasFeedback ? ` وتعليقي على الغياب: ${r.feedback_comment}` : '') +
-      `\n\nلمتابعة التقرير الشامل للطالب، يرجى الدخول إلى الرابط التالي:\n${parentPortalUrl}\n\nتحيات مستر شعبان قطب`;
- ;}
+    const parentPortalUrl = `http://localhost:5173/student/${r.student_id}`;
+
+    if (r.attendance_status === 'present') {
+      msg =
+        `ولي أمر الطالب ${r.full_name}، قد حصل ${r.full_name} على ${r.homework_score || '—'} من ${r.homework_max}` +
+        ` وقد حضر الحصة ${session.date}` +
+        (hasFeedback ? ` وتعليقي على الحصة: ${r.feedback_comment}` : '') +
+        `\n\nلمتابعة التقرير الشامل للطالب، يرجى الدخول إلى الرابط التالي:\n${parentPortalUrl}\n\nتحيات مستر شعبان قطب`;
+    } else if (r.attendance_status === 'absent') {
+      msg =
+        `ولى الأمر ${r.full_name} الطالب ${r.full_name} لم يحضر الحصه يوم ` +
+        `  ${session.date}` +
+        (hasFeedback ? ` وتعليقي على الغياب: ${r.feedback_comment}` : '') +
+        `\n\nلمتابعة التقرير الشامل للطالب، يرجى الدخول إلى الرابط التالي:\n${parentPortalUrl}\n\nتحيات مستر شعبان قطب`;
+    }
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
@@ -105,10 +104,25 @@ const SessionDetail = () => {
     setSaving(true);
     try {
       for (const r of records) {
-        await supabase.from('attendance').upsert({ session_id: sessionId, student_id: r.student_id, status: r.attendance_status }, { onConflict: 'session_id,student_id' });
-        await supabase.from('homework').upsert({ session_id: sessionId, student_id: r.student_id, score: r.homework_score ? Number(r.homework_score) : null, max_score: r.homework_max, status: r.homework_status }, { onConflict: 'session_id,student_id' });
+        await supabase.from('attendance').upsert(
+          { session_id: sessionId, student_id: r.student_id, status: r.attendance_status },
+          { onConflict: 'session_id,student_id' }
+        );
+        await supabase.from('homework').upsert(
+          {
+            session_id: sessionId,
+            student_id: r.student_id,
+            score: r.homework_score ? Number(r.homework_score) : null,
+            max_score: r.homework_max,
+            status: r.homework_status,
+          },
+          { onConflict: 'session_id,student_id' }
+        );
         if (r.feedback_comment.trim()) {
-          await supabase.from('feedback').upsert({ session_id: sessionId, student_id: r.student_id, comment: r.feedback_comment }, { onConflict: 'session_id,student_id' });
+          await supabase.from('feedback').upsert(
+            { session_id: sessionId, student_id: r.student_id, comment: r.feedback_comment },
+            { onConflict: 'session_id,student_id' }
+          );
         }
       }
       toast({ title: 'تم حفظ جميع البيانات بنجاح ✅' });
@@ -136,14 +150,6 @@ const SessionDetail = () => {
         .ssd-scroll-wrap::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); border-radius: 3px; }
         .ssd-scroll-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
         .ssd-table { min-width: 800px; width: 100%; border-collapse: collapse; }
-        .ssd-header-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 20px;
-          flex-wrap: wrap;
-        }
         @media (max-width: 639px) {
           .ssd-save-btn { width: 100%; justify-content: center; }
         }
@@ -151,7 +157,16 @@ const SessionDetail = () => {
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-        <Link to={`/lessons/${lessonId}`} style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', textDecoration: 'none', flexShrink: 0 }}>
+        <Link
+          to={`/lessons/${lessonId}`}
+          style={{
+            width: 40, height: 40, borderRadius: 12,
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#64748b', textDecoration: 'none', flexShrink: 0,
+          }}
+        >
           <ArrowLeft size={18} />
         </Link>
         <div>
@@ -172,7 +187,10 @@ const SessionDetail = () => {
       </div>
 
       {records.length === 0 ? (
-        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: '60px 20px', textAlign: 'center', color: '#64748b' }}>
+        <div style={{
+          background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
+          borderRadius: 16, padding: '60px 20px', textAlign: 'center', color: '#64748b',
+        }}>
           لا يوجد طلاب مسجلين في هذا الدرس
         </div>
       ) : (
@@ -184,12 +202,16 @@ const SessionDetail = () => {
                   {[
                     { label: 'اسم الطالب', w: '22%' },
                     { label: 'الحضور',     w: '14%' },
-                    { label: 'الامتحان',     w: '14%' },
+                    { label: 'الامتحان',   w: '18%' },
                     { label: 'الواجب',     w: '12%' },
-                    { label: 'ملاحظات',    w: '30%' },
+                    { label: 'ملاحظات',    w: '26%' },
                     { label: 'واتساب',     w: '8%'  },
                   ].map((h, i) => (
-                    <th key={i} style={{ padding: '14px 16px', textAlign: i === 0 || i === 4 ? 'right' : 'center', fontSize: 13, fontWeight: 600, color: '#94a3b8', width: h.w }}>
+                    <th key={i} style={{
+                      padding: '14px 16px',
+                      textAlign: i === 0 || i === 4 ? 'right' : 'center',
+                      fontSize: 13, fontWeight: 600, color: '#94a3b8', width: h.w,
+                    }}>
                       {h.label}
                     </th>
                   ))}
@@ -197,51 +219,107 @@ const SessionDetail = () => {
               </thead>
               <tbody>
                 {records.map((r, index) => (
-                  <tr key={r.student_id}
-                    style={{ borderBottom: index === records.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.06)', transition: 'background 0.2s' }}
+                  <tr
+                    key={r.student_id}
+                    style={{
+                      borderBottom: index === records.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.06)',
+                      transition: 'background 0.2s',
+                    }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     {/* اسم الطالب */}
-                    <td style={{ padding: '16px', fontWeight: 500, color: '#e2e8f0', fontSize: 14, whiteSpace: 'nowrap' }}>{r.full_name}</td>
+                    <td style={{ padding: '16px', fontWeight: 500, color: '#e2e8f0', fontSize: 14, whiteSpace: 'nowrap' }}>
+                      {r.full_name}
+                    </td>
 
                     {/* الحضور */}
                     <td style={{ padding: '16px', textAlign: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                         <Switch
                           checked={r.attendance_status === 'present'}
-                          onCheckedChange={checked => updateRecord(r.student_id, 'attendance_status', checked ? 'present' : 'absent')}
+                          onCheckedChange={checked =>
+                            updateRecord(r.student_id, 'attendance_status', checked ? 'present' : 'absent')
+                          }
                           style={{ backgroundColor: r.attendance_status === 'present' ? '#10b981' : '#3f3f46' } as React.CSSProperties}
                         />
-                        <span style={{ fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 999, whiteSpace: 'nowrap', background: r.attendance_status === 'present' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: r.attendance_status === 'present' ? '#34d399' : '#f87171' }}>
+                        <span style={{
+                          fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 999, whiteSpace: 'nowrap',
+                          background: r.attendance_status === 'present' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                          color: r.attendance_status === 'present' ? '#34d399' : '#f87171',
+                        }}>
                           {r.attendance_status === 'present' ? 'حاضر' : 'غائب'}
                         </span>
                       </div>
                     </td>
 
-                    {/* الواجب */}
+                    {/* الامتحان - الدرجة / أعلى درجة قابلة للتعديل */}
                     <td style={{ padding: '16px', textAlign: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                        <Input type="number" value={r.homework_score} onChange={e => updateRecord(r.student_id, 'homework_score', e.target.value)} min={0} max={r.homework_max}
-                          className="w-20 text-center" style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#e2e8f0' }} />
-                        <span style={{ color: '#64748b', whiteSpace: 'nowrap' }}>/ {r.homework_max}</span>
+                        <Input
+                          type="number"
+                          value={r.homework_score}
+                          onChange={e => updateRecord(r.student_id, 'homework_score', e.target.value)}
+                          min={0}
+                          max={r.homework_max}
+                          className="w-16 text-center"
+                          placeholder="0"
+                          style={{
+                            backgroundColor: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(255,255,255,0.15)',
+                            color: '#e2e8f0',
+                          }}
+                        />
+                        <span style={{ color: '#64748b', fontSize: 16, fontWeight: 700 }}>/</span>
+                        <Input
+                          type="number"
+                          value={r.homework_max}
+                          onChange={e => updateRecord(r.student_id, 'homework_max', Number(e.target.value))}
+                          min={1}
+                          className="w-16 text-center"
+                          title="أعلى درجة - اضغط للتعديل"
+                          style={{
+                            backgroundColor: 'rgba(99,102,241,0.1)',
+                            border: '1px solid rgba(99,102,241,0.35)',
+                            color: '#a5b4fc',
+                          }}
+                        />
                       </div>
                     </td>
 
-                    {/* الحالة */}
+                    {/* الواجب - حالة الإكمال */}
                     <td style={{ padding: '16px', textAlign: 'center' }}>
-                      <Button variant={r.homework_status === 'completed' ? 'default' : 'outline'} size="sm"
-                        onClick={() => updateRecord(r.student_id, 'homework_status', r.homework_status === 'completed' ? 'not_completed' : 'completed')}
-                        style={r.homework_status !== 'completed' ? { backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.18)', color: '#e2e8f0' } : {}}>
+                      <Button
+                        variant={r.homework_status === 'completed' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() =>
+                          updateRecord(r.student_id, 'homework_status', r.homework_status === 'completed' ? 'not_completed' : 'completed')
+                        }
+                        style={
+                          r.homework_status !== 'completed'
+                            ? { backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.18)', color: '#e2e8f0' }
+                            : {}
+                        }
+                      >
                         {r.homework_status === 'completed' ? '✓ مكتمل' : 'غير مكتمل'}
                       </Button>
                     </td>
 
                     {/* ملاحظات */}
                     <td style={{ padding: '16px' }}>
-                      <Textarea value={r.feedback_comment} onChange={e => updateRecord(r.student_id, 'feedback_comment', e.target.value)}
-                        placeholder="اكتب ملاحظة عن الطالب..." rows={2}
-                        style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: '#e2e8f0', resize: 'vertical', width: '100%' }} />
+                      <Textarea
+                        value={r.feedback_comment}
+                        onChange={e => updateRecord(r.student_id, 'feedback_comment', e.target.value)}
+                        placeholder="اكتب ملاحظة عن الطالب..."
+                        rows={2}
+                        style={{
+                          backgroundColor: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          color: '#e2e8f0',
+                          resize: 'vertical',
+                          width: '100%',
+                        }}
+                      />
                     </td>
 
                     {/* واتساب */}
