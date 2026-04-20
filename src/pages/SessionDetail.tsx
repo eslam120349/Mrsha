@@ -81,7 +81,7 @@ const SessionDetail = () => {
     const hasFeedback = r.feedback_comment.trim().length > 0;
     let msg = '';
 
-    const parentPortalUrl = `http://localhost:5173/student/${r.student_id}`;
+    const parentPortalUrl = `https://sh-2otb.vercel.app/student/${r.student_id}`;
 
     if (r.attendance_status === 'present') {
       msg =
